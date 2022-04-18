@@ -58,7 +58,7 @@ typedef struct dap_chain_net_srv_abstract
     //size_t pub_key_data_size;
     //void * pub_key_data;
 
-    uint64_t price; //  service price, for SERV_CLASS_ONCE ONCE for the whole service, for SERV_CLASS_PERMANENT  for one unit.
+    uint256_t price; //  service price, for SERV_CLASS_ONCE ONCE for the whole service, for SERV_CLASS_PERMANENT  for one unit.
     uint8_t price_units; // Unit of service (seconds, megabytes, etc.) Only for SERV_CLASS_PERMANENT
     char decription[128];
 }DAP_ALIGN_PACKED dap_chain_net_srv_abstract_t;
@@ -70,7 +70,7 @@ typedef struct dap_chain_net_srv_price
     dap_chain_wallet_t *wallet;
     char *net_name;
     dap_chain_net_t *net;
-    uint64_t value_datoshi;
+    uint256_t value_datoshi;
     char token[DAP_CHAIN_TICKER_SIZE_MAX];
     uint64_t units;
     dap_chain_net_srv_price_unit_uid_t units_uid;
@@ -105,6 +105,7 @@ typedef struct dap_chain_net_srv_price
 #define DAP_STREAM_CH_CHAIN_NET_SRV_PKT_TYPE_RESPONSE_ERROR_CODE_TX_COND_NOT_ACCEPT_TOKEN   0x00000403
 #define DAP_STREAM_CH_CHAIN_NET_SRV_PKT_TYPE_RESPONSE_ERROR_CODE_TX_COND_WRONG_SRV_UID      0x00000404
 #define DAP_STREAM_CH_CHAIN_NET_SRV_PKT_TYPE_RESPONSE_ERROR_CODE_WRONG_SIZE                 0x00000405
+#define DAP_STREAM_CH_CHAIN_NET_SRV_PKT_TYPE_RESPONSE_ERROR_CODE_BIG_SIZE                   0x00000406
 #define DAP_STREAM_CH_CHAIN_NET_SRV_PKT_TYPE_RESPONSE_ERROR_CODE_RECEIPT_CANT_FIND          0x00000500
 #define DAP_STREAM_CH_CHAIN_NET_SRV_PKT_TYPE_RESPONSE_ERROR_CODE_RECEIPT_NO_SIGN            0x00000501
 #define DAP_STREAM_CH_CHAIN_NET_SRV_PKT_TYPE_RESPONSE_ERROR_CODE_RECEIPT_WRONG_PKEY_HASH    0x00000502
@@ -284,6 +285,7 @@ dap_chain_datum_tx_receipt_t * dap_chain_net_srv_issue_receipt(dap_chain_net_srv
                                                                dap_chain_net_srv_price_t * a_price,
                                                                const void * a_ext, size_t a_ext_size);
 uint8_t dap_stream_ch_chain_net_srv_get_id();
+int dap_chain_net_srv_parse_pricelist(dap_chain_net_srv_t *a_srv, const char *a_config_section);
 
 DAP_STATIC_INLINE const char * dap_chain_net_srv_price_unit_uid_to_str( dap_chain_net_srv_price_unit_uid_t a_uid )
 {
@@ -293,6 +295,16 @@ DAP_STATIC_INLINE const char * dap_chain_net_srv_price_unit_uid_to_str( dap_chai
         case SERV_UNIT_MB: return "MEGABYTE";
         case SERV_UNIT_SEC: return "SECOND";
         case SERV_UNIT_DAY: return  "DAY";
+        case SERV_UNIT_PCS: return "PIECES";
         default: return "UNKNOWN";
     }
+}
+
+DAP_STATIC_INLINE bool dap_chain_net_srv_uid_compare(dap_chain_net_srv_uid_t a, dap_chain_net_srv_uid_t b)
+{
+#if DAP_CHAIN_NET_SRV_UID_SIZE == 8
+    return a.uint64 == b.uint64;
+#else // DAP_CHAIN_NET_SRV_UID_SIZE == 16
+    return !memcmp(&a, &b, DAP_CHAIN_NET_SRV_UID_SIZE);
+#endif
 }
